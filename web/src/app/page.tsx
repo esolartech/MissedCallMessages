@@ -4,14 +4,15 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 
 // Index route for smartcalldecline.com — App Router (src/app/page.tsx)
-// White site background; BLACK hero section. Hero right side shows a revenue-loss calculator
-// instead of the "Customer" SMS bubble.
+// Site uses a white background; HERO is BLACK. Hero right side shows a revenue-loss
+// calculator. A 60s interactive demo section is included and linked via #demo.
 
 export default function Page() {
   return (
     <main className="min-h-screen bg-white text-neutral-900">
       <Hero />
       <FeatureStrip />
+      <LiveDemo />
       <HowItWorks />
       <WaitlistForm />
       <FAQ />
@@ -79,7 +80,7 @@ function Hero() {
             </ul>
           </div>
 
-          {/* RIGHT: Replace customer bubble with calculator */}
+          {/* RIGHT: Calculator replaces previous customer bubble */}
           <div className="relative">
             <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-neutral-900/80 p-4 shadow-2xl">
               <LossCalculator />
@@ -105,45 +106,13 @@ function LossCalculator() {
     <div className="rounded-2xl bg-gradient-to-br from-blue-700 to-blue-900 p-5 text-white">
       <div className="rounded-xl bg-white/5 p-5">
         <h3 className="text-2xl font-bold">Monthly Revenue Lost</h3>
-        <p className="mt-1 text-sm text-white/80">
-          Miss fewer leads + save time + book jobs faster.
-        </p>
+        <p className="mt-1 text-sm text-white/80">Miss fewer leads + save time + book jobs faster.</p>
 
         <div className="mt-5 space-y-5">
-          <Slider
-            label="Missed calls per day"
-            min={0}
-            max={15}
-            step={1}
-            value={missedPerDay}
-            onChange={setMissedPerDay}
-          />
-          <Slider
-            label="Average job value"
-            min={100}
-            max={5000}
-            step={50}
-            value={avgValue}
-            format={(v)=>`$${v}`}
-            onChange={setAvgValue}
-          />
-          <Slider
-            label="Booking rate"
-            min={5}
-            max={100}
-            step={5}
-            value={bookingRate}
-            format={(v)=>`${v}%`}
-            onChange={setBookingRate}
-          />
-          <Slider
-            label="Workdays per month"
-            min={4}
-            max={26}
-            step={1}
-            value={workdays}
-            onChange={setWorkdays}
-          />
+          <Slider label="Missed calls per day" min={0} max={15} step={1} value={missedPerDay} onChange={setMissedPerDay} />
+          <Slider label="Average job value" min={100} max={5000} step={50} value={avgValue} format={(v)=>`$${v}`} onChange={setAvgValue} />
+          <Slider label="Booking rate" min={5} max={100} step={5} value={bookingRate} format={(v)=>`${v}%`} onChange={setBookingRate} />
+          <Slider label="Workdays per month" min={4} max={26} step={1} value={workdays} onChange={setWorkdays} />
 
           <div className="mt-3 rounded-2xl border border-white/10 bg-white/10 p-4">
             <div className="text-sm text-white/80">Potential Revenue Loss</div>
@@ -181,6 +150,102 @@ function Slider({ label, value, onChange, min, max, step = 1, format }: { label:
         className="accent-orange-400 w-full"
       />
     </label>
+  );
+}
+
+/** DEMO SECTION **/
+function LiveDemo() {
+  const [phase, setPhase] = useState<0 | 1 | 2 | 3 | 4>(0);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!playing) return;
+    setPhase(0);
+    const timeouts: NodeJS.Timeout[] = [];
+    timeouts.push(setTimeout(() => setPhase(1), 400));
+    timeouts.push(setTimeout(() => setPhase(2), 1400));
+    timeouts.push(setTimeout(() => setPhase(3), 2400));
+    timeouts.push(setTimeout(() => setPhase(4), 3600));
+    return () => timeouts.forEach(clearTimeout);
+  }, [playing]);
+
+  return (
+    <section id="demo" className="bg-white">
+      <Container className="py-16 sm:py-24">
+        <div className="grid items-center gap-8 md:grid-cols-2">
+          <div>
+            <h3 className="text-2xl font-bold sm:text-3xl text-neutral-900">See the flow in 60 seconds</h3>
+            <p className="mt-3 text-neutral-700">
+              Click the button to simulate a missed call. Watch the auto‑SMS, quick intake form, and reminder kick in.
+            </p>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setPlaying(true)}
+                className="inline-flex items-center justify-center rounded-xl bg-orange-600 px-5 py-2.5 font-semibold text-white shadow-lg shadow-orange-600/20 transition hover:bg-orange-500"
+              >
+                Simulate missed call
+              </button>
+              <button
+                onClick={() => {
+                  setPlaying(false);
+                  setPhase(0);
+                }}
+                className="inline-flex items-center justify-center rounded-xl border border-neutral-300 bg-white px-5 py-2.5 font-medium text-neutral-800 transition hover:bg-neutral-50"
+              >
+                Reset
+              </button>
+            </div>
+
+            <ul className="mt-6 space-y-2 text-sm text-neutral-700">
+              <li className={phase >= 1 ? "opacity-100" : "opacity-40"}>1) Missed call detected</li>
+              <li className={phase >= 2 ? "opacity-100" : "opacity-40"}>2) Auto‑SMS sent with form link</li>
+              <li className={phase >= 3 ? "opacity-100" : "opacity-40"}>3) Lead saved to Google Sheet</li>
+              <li className={phase >= 4 ? "opacity-100" : "opacity-40"}>4) Callback reminder scheduled</li>
+            </ul>
+          </div>
+
+          <div className="rounded-3xl border border-neutral-200 bg-neutral-900 p-4 text-white">
+            <div className="space-y-3">
+              <Bubble who="System" content="Incoming call from (312) 555‑0149…" />
+              {phase >= 1 && <Bubble who="System" content="Missed call. Triggering workflow…" />}
+              {phase >= 2 && (
+                <Bubble who="You (auto‑SMS)" accent content="Thanks for calling! I’m on a job. Tap here to share your details so I can call you back." />
+              )}
+              {phase >= 3 && (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm">
+                  <div className="mb-2 text-white/70">Quick Intake</div>
+                  <div className="space-y-2 text-white/90">
+                    <Field label="Name" value="Jordan P." />
+                    <Field label="Address" value="773 W Lake St" />
+                    <Field label="Issue" value="Water heater leaking" />
+                  </div>
+                </div>
+              )}
+              {phase >= 4 && <Bubble who="System" content="Lead saved. Reminder set for today at 4:00 PM." />}
+            </div>
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+function Bubble({ who, content, accent = false }: { who: string; content: string; accent?: boolean }) {
+  return (
+    <div className={`rounded-2xl border p-3 text-sm ${accent ? "border-orange-500/30 bg-orange-500/10" : "border-white/10 bg-white/5"}`}>
+      <div className="mb-1 text-[11px] uppercase tracking-wide text-white/60">{who}</div>
+      <div className="text-white/90">{content}</div>
+    </div>
+  );
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-white/60">{label}</span>
+      <span className="truncate font-medium">{value}</span>
+    </div>
   );
 }
 
